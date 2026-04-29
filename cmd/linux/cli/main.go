@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	pogodaby "github.com/Den4ik-droid/weather-widget/internal/adapters/pogoda_by"
 	"github.com/Den4ik-droid/weather-widget/internal/adapters/weather"
 	"github.com/Den4ik-droid/weather-widget/internal/pkg/app/cli"
 	"github.com/Den4ik-droid/weather-widget/internal/pkg/flags"
@@ -48,6 +49,8 @@ func getProvider(cfg config.Config, l cli.Logger) cli.WeatherInfo {
 	switch cfg.P.Type {
 	case "open-meteo":
 		wi = weather.New(l)
+	case "pogoda":
+		wi = pogodaby.New(l)
 	default:
 		wi = weather.New(l)
 	}
