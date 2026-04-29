@@ -1,18 +1,22 @@
 package main
 
 import (
-	"log"
+	"os"
 
+	"github.com/Den4ik-droid/weather-widget/internal/adapters/weather"
 	"github.com/Den4ik-droid/weather-widget/internal/pkg/app/cli"
 	"github.com/Den4ik-droid/weather-widget/pkg/logger"
 )
 
 func main() {
-	logger := logger.NewSimpleLogger()
-	app := cli.New(logger)
+	l := logger.New()
+	wi := weather.New(l)
+	app := cli.New(l, wi)
 
-	if err := app.Run(); err != nil {
-		logger.Error(err.Error())  // ← передавали строку
-		log.Fatal(err)
+	err := app.Run()
+	if err != nil {
+		l.Error("Some error", err)
+		os.Exit(1)
 	}
+	os.Exit(0)
 }
