@@ -6,21 +6,26 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/Den4ik-droid/weather-widget/pkg/logger"
 )
 
-type cliApp struct {
-	log logger.Logger
+// Интерфейс Logger объявлен прямо здесь (в пакете cli)
+type Logger interface {
+	Info(string)
+	Debug(string)
+	Error(string, error)  // ← метод с ошибкой
 }
 
-func New(log logger.Logger) *cliApp {
-	return &cliApp{log: log}
+type cliApp struct {
+	l Logger  // ← переименовано с log на l (как в PDF)
+}
+
+func New(l Logger) *cliApp {  // ← параметр переименован в l
+	return &cliApp{
+		l: l,  // ← поле l
+	}
 }
 
 func (c *cliApp) Run() error {
-	c.log.Info("Запуск получения погоды")
-
 	type Current struct {
 		Temp float32 `json:"temperature_2m"`
 	}
@@ -37,35 +42,37 @@ func (c *cliApp) Run() error {
 	)
 	url := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?%s", params)
 
-	c.log.Debug("Формируем запрос: " + url)
+	// Логирование успешной генерации URL
+	c.l.Debug(fmt.Sprintf("url was generated success - %s", url))  // ← новое
 
 	resp, err := http.Get(url)
 	if err != nil {
-		c.log.Error("Ошибка HTTP-запроса")
-		customErr := errors.New("can`t get weather data from openmeteo")
+		c.l.Error("can't get weather data", err)  // ← теперь с err
+		customErr := errors.New("can't get weather data from openmeteo")
 		return errors.Join(customErr, err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			c.log.Error("Ошибка закрытия тела ответа")
-			fmt.Printf("can`t close body err - %s\n", err.Error())
+			c.l.Error("can't close body", err)  // ← теперь с err
 		}
 	}()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		c.log.Error("Ошибка чтения данных")
-		customErr := errors.New("can`t read data from response")
+		c.l.Error("can't read data from body", err)  // ← теперь с err
+		customErr := errors.New("can't read data from response")
 		return errors.Join(customErr, err)
 	}
+
+	// Логирование успешного чтения данных
+	c.l.Debug(fmt.Sprintf("data was readed successfully size - %d", len(data)))  // ← новое
 
 	if err := json.Unmarshal(data, &response); err != nil {
-		c.log.Error("Ошибка парсинга JSON")
-		customErr := errors.New("can`t unmarshal data from response")
+		c.l.Error("can't unmarshal json data", err)  // ← теперь с err
+		customErr := errors.New("can't unmarshal data from response")
 		return errors.Join(customErr, err)
 	}
 
-	c.log.Info("Погода успешно получена")
 	fmt.Printf(
 		"Температура воздуха - %.2f градусов цельсия\n",
 		response.Curr.Temp,

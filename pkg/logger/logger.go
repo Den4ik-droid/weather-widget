@@ -1,25 +1,51 @@
 package logger
 
+import (
+	"fmt"
+	"time"
+)
+
+var (
+	INFO  = "INFO"
+	DEBUG = "DEBUG"
+	ERROR = "ERROR"
+)
+
 type Logger interface {
 	Info(msg string)
 	Debug(msg string)
-	Error(msg string)
+	Error(msg string, err error)
 }
 
-type SimpleLogger struct{}
+type logger struct{}
 
-func NewSimpleLogger() *SimpleLogger {
-	return &SimpleLogger{}
+func New() *logger {
+	return &logger{}
 }
 
-func (l *SimpleLogger) Info(msg string) {
-	println("[INFO] " + msg)
+func (l *logger) Info(msg string) {
+	fmt.Println(l.msg(INFO, msg))
 }
 
-func (l *SimpleLogger) Debug(msg string) {
-	println("[DEBUG] " + msg)
+func (l *logger) Debug(msg string) {
+	fmt.Println(l.msg(DEBUG, msg))
 }
 
-func (l *SimpleLogger) Error(msg string) {
-	println("[ERROR] " + msg)
+func (l *logger) Error(msg string, err error) {
+	fmt.Println(
+		l.msg(
+			ERROR,
+			msg+" err - "+err.Error(),
+		),
+	)
+}
+
+func (l *logger) msg(level string, msg string) string {
+	timeStr := time.Now().Format(time.RFC3339)
+	return fmt.Sprintf(
+		"[%s] %s, message - %s",
+		level,
+		timeStr,
+		msg,
+	)
 }
